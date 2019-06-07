@@ -1,0 +1,11 @@
+.idea/
+cmake-build-debug
+CMakeLists.txt
+out/
+dataset/*/pruned/
+build
+bin
+lib
+include
+config.mk
+__pycache__

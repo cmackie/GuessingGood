@@ -1,0 +1,138 @@
+\documentclass{article}
+% if you need to pass options to natbib, use, e.g.:
+% \PassOptionsToPackage{numbers, compress}{natbib}
+% before loading nips_2017
+%
+% to avoid loading the natbib package, add option nonatbib:
+% \usepackage[nonatbib]{nips_2017}
+
+\usepackage[final]{nips_2017}
+
+% to compile a camera-ready version, add the [final] option, e.g.:
+% \usepackage[final]{nips_2017}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+
+\title{Guessing Good: Applying Machine Learning to Boolean Satisfiability}
+
+% The \author macro works with any number of authors. There are two
+% commands used to separate the names and addresses of multiple
+% authors: \And and \AND.
+%
+% Using \And between authors leaves it to LaTeX to determine where to
+% break the lines. Using \AND forces a line break at that point. So,
+% if LaTeX puts 3 of 4 authors names on the first line, and the last
+% on the second line, try using \AND instead of \And before the third
+% author name.
+
+\author{
+    Nathaniel Yazdani \quad Christopher A. Mackie\\
+    Paul G. Allen School of Computer Science and Engineering\\
+    University of Washington\\
+    Seattle, WA 98105\\
+    \texttt{\{nyazdani, mackic\}@cs.washington.edu}\\
+}
+
+\begin{document}
+% \nipsfinalcopy is no longer used
+
+\maketitle
+
+%\section*{Project Proposal}
+
+%We will be using data exclusively from 3-clause 3-SAT.
+%Restricting the problem to 3-clause 3-SAT formulae avoids distracting problems about the sparsity of collected data and
+%enables us to more conclusively answer the research question: \emph{Can a machine-learnt probabilistic model be an
+%effective augmentation to a modern SAT solver}? We will prune the set of problems in this domain based on their
+%modularity, $Q$, a measure of community structure.
+%In particular, we will include only problems with $Q > 0.13$, as these are more representative of realistic SAT
+%problems [1].
+%
+%The form of this data for a particular problem will be the problem itself, a log of the semantic actions (\textit{e.g.},
+%case splitting, unit propagation) taken by an instrumented version of MiniSAT, and a set of variable assignments which
+%satisfy the problem (or the empty set if it is unsatisfiable).
+%This data is included with this proposal.
+
+\subsection*{Dataset}
+
+We will be using benchmark SAT problems from the international SAT
+Competition\footnote{\url{http://www.satcompetition.org/}}. These problems
+consist of SAT problems of varying degrees of difficulty, and their
+satisfiability. We will only use problems from the \textbf{industrial} and
+\textbf{application} categories, as randomly generated and crafted SAT instances
+are well known to be unrepresentative of real-world SAT problems [1].
+
+\subsection*{Project Idea}
+
+Our project aims to answer the following research question: \emph{Can a modern
+SAT solver leverage a probabilistic model to improve the accuracy of its random
+guesses when solving real-world SAT instances?} Real-world SAT instances have
+significant internal structure [1] exploited by existing techniques for variable
+prioritization, but no such techniques exist for guessing the variable
+assignments.
+
+We will proceed in two phases. In the first phase, we will train a model to
+produce a vector of variable assignment probabilities (where element $i$ is the
+probability that the $i$\textsuperscript{th} variable is true) for an input SAT
+formula. On its own, we expect this model to perform poorly as a predictor of
+satisfying assignments, but the engineering and experience will directly tie
+into the second phase.
+
+In the second phase, we will integrate the model into a modern SAT solver, to
+use the model's predictions only when forced to make a random guess for a
+particular variable assignment. In this phase, we will also design a conjugate
+distribution so that the solver may update the model with facts logically
+deduced from earlier decisions (\textit{e.g.}, unit propagation and conflict
+analysis).
+
+%The first will be trained on our dataset to produce an initial prior for the problem space.
+%The second will continually update this prior/posterior as an instrumented version of MiniSAT solves the problem.
+%This model will be used to inform MiniSAT which variable it should make a guess for next (basically inferring a decision
+%tree for minimal backtracking).
+%When MiniSAT does backtrack, we can update the model with the conflict clause, which is typically discarded due to
+%memory constraints.
+
+\subsection*{Software}
+
+We will instrument MiniSAT\footnote{\url{https://github.com/niklasso/minisat}},
+a modern SAT solver, to implement our guided search.
+We chose MiniSAT for its
+thorough documentation and past performance in the SAT Competition.
+
+\subsection*{Papers to Read}
+
+Our selected papers are listed in References. [2-4] are most relevant for
+the execution of this project, whereas [1] provides background knowledge on the
+structure found in real-world SAT instances.
+
+\subsection*{Milestone Plan}
+
+We plan to complete the first phase by the milestone. %We hope to have extracted
+%several useful features to use in our more sophisticated technique from this
+%experiment.
+
+\section*{References}
+\label{references}
+
+\small
+
+[1] Audemard, G., Fischmeister, S., Ganesh, V., Newsham, Z., \& Simon, L. (2014).
+Impact of Community Structure on SAT Solver Performance. \textit{SAT}.
+
+[2] Blaschko, M.B., \& Flint, A. (2012).
+Perceptron Learning of SAT. \textit{NIPS}.
+
+[3] Czarnecki, K., Ganesh, V., Liang, J.H., \& Poupart, P. (2016).
+Learning Rate Based Branching Heuristic for SAT Solvers. \textit{SAT}.
+
+[4] Ganesh, V., Near, J.P., Rinard, M., \& Singh, R. (2009).
+AvatarSAT: An Auto-Tuning Boolean SAT Solver. \textit{MIT Technical Report}.
+
+\end{document}

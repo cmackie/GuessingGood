@@ -1,0 +1,205 @@
+\documentclass{article}
+% if you need to pass options to natbib, use, e.g.:
+% \PassOptionsToPackage{numbers, compress}{natbib}
+% before loading nips_2017
+%
+% to avoid loading the natbib package, add option nonatbib:
+% \usepackage[nonatbib]{nips_2017}
+
+\usepackage[final]{nips_2017}
+
+% to compile a camera-ready version, add the [final] option, e.g.:
+% \usepackage[final]{nips_2017}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{amsmath}
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+
+\title{Guessing Good: Applying Machine Learning to Boolean Satisfiability}
+
+% The \author macro works with any number of authors. There are two
+% commands used to separate the names and addresses of multiple
+% authors: \And and \AND.
+%
+% Using \And between authors leaves it to LaTeX to determine where to
+% break the lines. Using \AND forces a line break at that point. So,
+% if LaTeX puts 3 of 4 authors names on the first line, and the last
+% on the second line, try using \AND instead of \And before the third
+% author name.
+
+\author{
+    Nathaniel Yazdani \quad Christopher A. Mackie\\
+    Paul G. Allen School of Computer Science and Engineering\\
+    University of Washington\\
+    Seattle, WA 98105\\
+    \texttt{\{nyazdani, mackic\}@cs.washington.edu}\\
+}
+
+\begin{document}
+% \nipsfinalcopy is no longer used
+
+\maketitle
+
+\section*{Objective}
+Our objective for the milestone was to train a model on examples of
+real-world SAT instances to give a probable assignment (a continuous value
+between 0 and 1) for each variable in a given SAT formula. This model would
+serve as a baseline for the second phase of the project, in which we investigate
+techniques for online learning within an instrumented SAT solver. We did not
+anticipate that this model would predict particularly well, since Boolean
+satisfiability is an NP-complete problem. However, we hoped that the model
+could learn to identify patterns in real-world SAT instances, which are known
+to exhibit significant structure [1], in order to serve as an informative prior
+for online learning.
+
+\section*{Overview}
+Real-world SAT instances typically have a large number (\textit{e.g.}, tens of
+thousands) of clauses and vary widely in shape, so we knew that building a model
+to take an entire SAT formula as input was infeasible (\textit{cf.}, ``curse of
+dimensionality''). Consequently, we had to brainstorm useful features of SAT
+formulae on which to train a model. Moreover, the features had to be per
+\emph{variable} in a given SAT formula, because a useful model cannot assume
+that the input SAT formula has any particular fixed shape or even any particular
+number of variables). In other words, we had to design a feature space $\phi :
+Var \times SAT \rightarrow \mathbb{R}^d$. Inspired by past work [2], we generate
+the following metrics for each literal $l \in \{x, \neg x\}$ for each variable
+$x$ of the formula on (1) the full formula, (2) the formula restricted to unit
+clauses, (3) the formula restricted to binary clauses, (4) the formula
+restricted to ternary clauses, (5) the formula restricted to quaternary clauses,
+(6) the formula restricted to Horn clauses, and (7) the formula restricted to
+co-Horn clauses. We note that not all of these features have been previously
+explored by past work on SAT heuristics (to the best of our knowledge).
+
+\begin{itemize}
+    \item Number of clauses in which $l$ appears
+    \item Number of clauses, inversely weighted by clause length, in which $l$ appears
+    \item Size of largest clause in which $l$ appears
+    \item Size of smallest clause in which $l$ appears
+    \item The Jeroslow-Wang cue for $l$
+    \item Number of clauses in which $l$ appears with more positive literals than negative literals
+    \item Number of clauses in which $l$ appears with more negative literals than positive literals
+    \item Number of clauses in which $l$ appears with equal number of positive and negative literals
+\end{itemize}
+
+% Specifically, we chose to extract a feature vector for each variable in the SAT
+% instance. Let $X = [x_1, x_2, ..., x_n]^T \in \mathbb{R}^{n \times d}$ be a
+% matrix extracted from a particular SAT instance, where each row $x_i$ is a
+% feature vector, consisting of $d$ features, for the $i\text{th}$ variable in the
+% SAT instance, which consists of $n$ variables. Let $y = [y_1, y_2, ..., y_n]^T
+% \in \mathbb{R}^n$ be a vector consisting of labels for the variables in a
+% particular SAT instance. These labels indicate whether or not a particular
+% variable was true in the solved SAT problem.\\
+%
+% \noindent
+% We now describe the feature extraction process for a particular variable.
+% We form seven derived subsets of the clauses of SAT:
+
+% \begin{enumerate}
+%     \item $C_1$: the set of clauses with only one literal
+%     \item $C_2$: the set of clauses with only two literals
+%     \item $C_3$: the set of clauses with only three literals
+%     \item $C_4$: the set of clauses with only four literals
+%     \item $H$: the set of clauses with at most one positive literal
+%     \item $A$: the set of clauses with at most one negative literal
+%     \item $C$: the set of all clauses
+% \end{enumerate}
+
+% \noindent
+% For both the positive and negative literal, and for each of the seven subsets, we calculate the following features,
+% where $C_i$ is the subset with all clauses that do not contain the literal removed:
+% \begin{itemize}
+%     \item $\lvert C_i \rvert$
+%     \item $\sum \frac{1}{\lvert c \rvert}\text{ s.t. }c \in C_i$
+%     \item $\max \lvert c \rvert\text{ s.t. }c \in C_i$
+%     \item $\min \lvert c \rvert\text{ s.t. }c \in C_i$
+%     \item $\sum 2^{-\lvert c \rvert}\text{ s.t. }c \in C_i$
+%     \item Number of clauses in $C_i$ with more positive literals than negative literals
+%     \item Number of clauses in $C_i$ with more negative literals than positive literals
+%     \item Number of clauses in $C_i$ with the same number of negative literals as positive literals
+% \end{itemize}
+
+\noindent
+With these features, we have implemented two separate models, using
+lasso-regularized logistic regression and a 6-layer neural network. We
+anticipate the linear model to be more useful for the second phase, but
+comparison to the neural network's performance would allow us to gauge whether
+we ought to extend our feature space.
+
+\section*{Engineering Challenges}
+In working to achieve our milestone objective, we had to overcome significant
+engineering challenges. First and most critically, we found that the dataset was
+so massive that we could only fully extract the smallest of the six or so
+archives composing the dataset on our development server
+(\texttt{attu.cs.washington.edu}) before violating our disk quota. (Neither
+teammate had access to a personally owned desktop computer on which we could run
+long-running computations.) Eventually, we discovered that the vast bulk of the
+data size was due to a minority of SAT instances that were significantly larger
+than the rest (\textit{e.g.}, hundreds of megabytes versus kilobytes). We chose
+to prune our dataset to discard SAT formulae 20 megabytes or larger. This
+reduced the number of examples by approximately 10\% but shrunk the size of the
+data from 30 gigabytes to approximately 3 gigabytes, a decrease by a factor of
+10.
+
+Once the dataset size was brought under control, we faced a further challenge in
+the calculation of feature vectors. Despite limiting the SAT formulae to 20
+megabytes, many still contained hundreds of thousands of clauses and variables.
+As such, our Python script for feature analysis was far too slow to permit
+effective exploration of additional features, beyond those initially considered.
+To address this challenge, we reimplemented the script in C++.
+
+\section*{Preliminary Results}
+While we have been able to train on a few SAT instances for debugging, we
+overcame our engineering challenges too late to run a true experiment on our
+whole pruned dataset. As such, we do not have conclusive results to report,
+since we need to train our models on at least a significant subset of the pruned
+dataset. Furthermore, we need to conduct cross validation for parameter tuning
+and possibly augment our feature space. The primary prupose of our first phase
+was to discover what engineering challenges our dataset presented, and overcome
+them. We have done this, and as such we are now able to move forward with our
+project unhindered by the mass of our data.
+
+\section*{Next Steps}
+Our immediate next steps are to train our two models on the entirety of our
+pruned dataset and to apply cross validation to tune model parameters. Depending
+on the models' relative prediction performance, we may extend our feature space
+with additional direct and/or derived features. Besides the trained models
+themselves, the chosen features will guide the rest of the second phase. We are
+not concerned so much with the isolated prediction performance of these models,
+but rather how different feature sets fair against each other.
+
+Once we have produced a sufficiently representative feature set, we will use the
+trained models as informative priors in an online-learning problem. We will
+instrument the MiniSAT solver to log its intermediate state, so that we may
+train a model to adapt its prediction to the current and past solver state.
+Then, we will modify MiniSAT to leverage the model to guide its navigation of
+the decision tree. This is where we think machine learning can be truly
+effective in this problem space. While it is not likely to be good at outright
+prediction of satisfying assignments to SAT formulae, we think that it will be
+effective at determining the (approximately) best variable to give a certain
+assignment during the course of solving the SAT formula, based on the
+information available.
+
+\section*{References}
+\label{references}
+
+\small
+
+[1] Audemard, G., Fischmeister, S., Ganesh, V., Newsham, Z., \& Simon, L. (2014).
+Impact of Community Structure on SAT Solver Performance. \textit{SAT}.
+
+[2] Blaschko, M.B., \& Flint, A. (2012).
+Perceptron Learning of SAT. \textit{NIPS}.
+
+[3] Czarnecki, K., Ganesh, V., Liang, J.H., \& Poupart, P. (2016).
+Learning Rate Based Branching Heuristic for SAT Solvers. \textit{SAT}.
+
+[4] Ganesh, V., Near, J.P., Rinard, M., \& Singh, R. (2009).
+AvatarSAT: An Auto-Tuning Boolean SAT Solver. \textit{MIT Technical Report}.
+
+\end{document}

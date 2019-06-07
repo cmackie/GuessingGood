@@ -1,0 +1,59 @@
+Assuming 1 (0)
+Propagating 1
+Assuming 4 (1)
+Propagating 4
+Propagating 2
+Propagating -3
+Solved
+Assuming -3 (0)
+Propagating -3
+Assuming 1 (1)
+Propagating 1
+Assuming 4 (2)
+Propagating 4
+Backtracking (2)
+-4 -1 3 0
+Propagating -4
+Assuming 2 (3)
+Propagating 2
+Solved
+Assuming 2 (0)
+Propagating 2
+Assuming -3 (1)
+Propagating -3
+Assuming 1 (2)
+Propagating 1
+Backtracking (2)
+-1 3 -2 0
+Propagating -1
+Propagating 4
+Solved
+Assuming 4 (0)
+Propagating 4
+Propagating 2
+Assuming -3 (2)
+Propagating -3
+Backtracking (1)
+3 -4 0
+Propagating 3
+Backtracking (0)
+-4 0
+Propagating -4
+Assuming 1 (1)
+Propagating 1
+Assuming 3 (2)
+Propagating 3
+Propagating -2
+Solved
+Assuming -2 (1)
+Propagating -2
+Assuming 1 (2)
+Propagating 1
+Propagating -3
+Solved
+Assuming -3 (1)
+Propagating -3
+Propagating 1
+Backtracking (0)
+3 0
+Propagating 3
